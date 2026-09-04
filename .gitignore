@@ -1,0 +1,6 @@
+dataset_tp1/train/
+dataset_tp1/test/
+*.zip
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
