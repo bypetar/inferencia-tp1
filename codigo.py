@@ -63,11 +63,10 @@ print("1-a) Accuracy sin PCA:", accuracy_sin_pca)
 
 def aplicar_pca(X_train, X_test, K):
 
-    pca = PCA(n_components=K) # Crea PCA conservando K componentes principales
-
-    X_train_pca = pca.fit_transform(X_train) # PCA aprende las componentes usando solo train
-
-    X_test_pca = pca.transform(X_test) # Test se proyecta usando el PCA aprendido con train
+    pca = PCA(n_components=K, random_state=42)
+    
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
 
     return X_train_pca, X_test_pca, pca
 
