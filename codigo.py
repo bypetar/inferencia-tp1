@@ -175,7 +175,7 @@ def graficar_accuracy_pca(valores_K, accuracies_pca, accuracy_sin_pca):
     plt.show()
 
 
-#----------------- ROTACION DE IMAGENES -----------------
+#----------------- EJ 2 -----------------
 
 def perturbar_imagenes(X, p):
     """
@@ -194,6 +194,28 @@ def perturbar_imagenes(X, p):
             X_perturbado[i] = imagen_rotada.reshape(-1)
 
     return X_perturbado
+
+def simulacion_monte_carlo(X_test, y_test, pca, modelo, p, NMC):
+    """
+    Realiza NMC simulaciones perturbando las imágenes de test
+    con probabilidad p y devuelve las accuracies obtenidas.
+    """
+
+    accuracies = []
+
+    for _ in range(NMC):
+        X_test_perturbado = perturbar_imagenes(X_test, p)
+
+        X_test_pca = pca.transform(X_test_perturbado)
+
+        y_pred = modelo.predict(X_test_pca)
+
+        accuracy = accuracy_score(y_test, y_pred)
+
+        accuracies.append(accuracy)
+
+    return accuracies
+
 
 #----------------- EJECUCIÓN DEL TP -----------------
 
