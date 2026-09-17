@@ -175,6 +175,26 @@ def graficar_accuracy_pca(valores_K, accuracies_pca, accuracy_sin_pca):
     plt.show()
 
 
+#----------------- ROTACION DE IMAGENES -----------------
+
+def perturbar_imagenes(X, p):
+    """
+    Rota 180 grados cada imagen con probabilidad p.
+    """
+
+    X_perturbado = X.copy()
+
+    for i in range(len(X_perturbado)):
+
+        if np.random.rand() < p:
+            imagen = X_perturbado[i].reshape(128, 128)
+
+            imagen_rotada = np.rot90(imagen, 2)
+
+            X_perturbado[i] = imagen_rotada.reshape(-1)
+
+    return X_perturbado
+
 #----------------- EJECUCIÓN DEL TP -----------------
 
 def main():
