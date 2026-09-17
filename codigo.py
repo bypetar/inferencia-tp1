@@ -69,6 +69,16 @@ def regression_logistica(X_train, y_train, X_test, y_test):
     return accuracy
 
 
+def entrenar_regresion_logistica(X_train, y_train): # Utilizada en el ej 2
+    """
+    Entrena y devuelve un modelo de regresión logística.
+    """
+
+    modelo = LogisticRegression(max_iter=2000)
+    modelo.fit(X_train, y_train)
+
+    return modelo
+
 #----------------- PCA -----------------
 
 def aplicar_pca(X_train, X_test, K):
@@ -140,8 +150,6 @@ def evaluar_pca(X_train, y_train, X_test, y_test, valores_K):
 
         accuracies.append(accuracy)
 
-        print(f"K = {K:3d} | Accuracy = {accuracy:.4f}")
-
     return accuracies
 
 
@@ -195,6 +203,22 @@ def perturbar_imagenes(X, p):
 
     return X_perturbado
 
+
+def graficar_pca_perturbado(X_test, y_test, pca, valores_p):
+    """
+    Genera una realización perturbada para cada valor de p
+    y grafica las dos primeras componentes principales.
+    """
+
+    for p in valores_p:
+        X_test_perturbado = perturbar_imagenes(X_test, p)
+
+        X_test_pca = pca.transform(X_test_perturbado)
+
+        graficar_pca(X_test_pca, y_test, f"PCA - Test perturbado con p = {p}")
+
+#----------------- MONTE CARLO -----------------
+
 def simulacion_monte_carlo(X_test, y_test, pca, modelo, p, NMC):
     """
     Realiza NMC simulaciones perturbando las imágenes de test
@@ -216,19 +240,44 @@ def simulacion_monte_carlo(X_test, y_test, pca, modelo, p, NMC):
 
     return accuracies
 
-def graficar_pca_perturbado(X_test, y_test, pca, valores_p):
+
+def evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo, valores_p, NMC):
     """
-    Genera una realización perturbada para cada valor de p
-    y grafica las dos primeras componentes principales.
+    Estima el accuracy medio para cada valor de p
+    mediante simulación Monte Carlo.
     """
+
+    accuracies_medias = []
 
     for p in valores_p:
-        X_test_perturbado = perturbar_imagenes(X_test, p)
 
-        X_test_pca = pca.transform(X_test_perturbado)
+        accuracies = simulacion_monte_carlo(X_test, y_test, pca, modelo, p, NMC)
 
-        graficar_pca(X_test_pca, y_test, f"PCA - Test perturbado con p = {p}")
+        accuracy_media = np.mean(accuracies)
+        accuracies_medias.append(accuracy_media)
 
+    return accuracies_medias
+
+
+def graficar_accuracy_monte_carlo(valores_p, accuracies_medias):
+    """
+    Grafica el accuracy medio estimado en función de p.
+    """
+
+    plt.figure(figsize=(8, 6))
+
+    plt.plot(
+        valores_p,
+        accuracies_medias,
+        marker="o"
+    )
+
+    plt.xlabel("Probabilidad de perturbación p")
+    plt.ylabel("Accuracy medio")
+    plt.title("Accuracy medio en función de p")
+    plt.grid()
+
+    plt.show()
 
 #----------------- EJECUCIÓN DEL TP -----------------
 
@@ -270,17 +319,40 @@ def main():
 
     valores_K = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 50, 75, 100, 150, 200]
 
-    print("1-c) Evaluando PCA con diferentes valores de K:")
-
     accuracies_pca = evaluar_pca(X_train, y_train, X_test, y_test, valores_K)
+
+    print("1-c) Accuracies para cada K:")
+    for k, accuracy in zip(valores_K, accuracies_pca):
+        print(f"K = {k:3d} | Accuracy = {accuracy:.4f}")
+    print()
 
     graficar_accuracy_pca(valores_K, accuracies_pca, accuracy_sin_pca)
 
-    #----------------- EJERCICIO 2.a -----------------
-    
+    #----------------- EJERCICIO 2 -----------------
+
     valores_p = [0.1, 0.3, 0.5, 0.7, 0.9]
 
+    modelo_pca = entrenar_regresion_logistica(X_train_pca, y_train)
+
+    #----------------- EJERCICIO 2.A -----------------
+    print("2-a) Graficando PCA para distintos valores de p...")
+    print()
+
     graficar_pca_perturbado(X_test, y_test, pca, valores_p)
+
+    #----------------- EJERCICIO 2.B -----------------
+
+    NMC = 1000
+
+    print("2-b) Calculando accuracy medio estimado mediante Monte Carlo...")
+
+    accuracies_medias = evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo_pca, valores_p, NMC)
+
+    for p, accuracy_media in zip(valores_p, accuracies_medias):
+        print(f"p = {p:.1f} | E[Ap] = {accuracy_media:.4f}")
+    print()
+
+    graficar_accuracy_monte_carlo(valores_p, accuracies_medias)
 
 if __name__ == "__main__":
     main()
