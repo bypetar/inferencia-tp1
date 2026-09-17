@@ -216,12 +216,25 @@ def simulacion_monte_carlo(X_test, y_test, pca, modelo, p, NMC):
 
     return accuracies
 
+def graficar_pca_perturbado(X_test, y_test, pca, valores_p):
+    """
+    Genera una realización perturbada para cada valor de p
+    y grafica las dos primeras componentes principales.
+    """
+
+    for p in valores_p:
+        X_test_perturbado = perturbar_imagenes(X_test, p)
+
+        X_test_pca = pca.transform(X_test_perturbado)
+
+        graficar_pca(X_test_pca, y_test, f"PCA - Test perturbado con p = {p}")
+
 
 #----------------- EJECUCIÓN DEL TP -----------------
 
 def main():
     """
-    Ejecuta los ejercicios 1.a, 1.b y 1.c del trabajo práctico.
+    Ejecuta los ejercicios del trabajo práctico.
     """
 
     #----------------- CARGA DEL DATASET -----------------
@@ -236,12 +249,7 @@ def main():
 
     #----------------- EJERCICIO 1.A -----------------
 
-    accuracy_sin_pca = regression_logistica(
-        X_train,
-        y_train,
-        X_test,
-        y_test
-    )
+    accuracy_sin_pca = regression_logistica(X_train, y_train, X_test, y_test)
 
     print("1-a) Accuracy sin PCA:", accuracy_sin_pca)
     print()
@@ -250,21 +258,13 @@ def main():
 
     K = 2
 
-    X_train_pca, X_test_pca, _ = aplicar_pca(
-        X_train,
-        X_test,
-        K
-    )
+    X_train_pca, X_test_pca, pca = aplicar_pca(X_train, X_test,K)
 
     print("1-b) Antes de PCA:  ", X_test.shape)
     print("     Después de PCA:", X_test_pca.shape)
     print()
 
-    graficar_pca(
-        X_test_pca,
-        y_test,
-        "PCA - Conjunto de test"
-    )
+    graficar_pca(X_test_pca, y_test, "PCA - Conjunto de test")
 
     #----------------- EJERCICIO 1.C -----------------
 
@@ -272,20 +272,15 @@ def main():
 
     print("1-c) Evaluando PCA con diferentes valores de K:")
 
-    accuracies_pca = evaluar_pca(
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        valores_K
-    )
+    accuracies_pca = evaluar_pca(X_train, y_train, X_test, y_test, valores_K)
 
-    graficar_accuracy_pca(
-        valores_K,
-        accuracies_pca,
-        accuracy_sin_pca
-    )
+    graficar_accuracy_pca(valores_K, accuracies_pca, accuracy_sin_pca)
 
+    #----------------- EJERCICIO 2.a -----------------
+    
+    valores_p = [0.1, 0.3, 0.5, 0.7, 0.9]
+
+    graficar_pca_perturbado(X_test, y_test, pca, valores_p)
 
 if __name__ == "__main__":
     main()
