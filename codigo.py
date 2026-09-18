@@ -135,18 +135,9 @@ def evaluar_pca(X_train, y_train, X_test, y_test, valores_K):
     accuracies = []
 
     for K in valores_K:
-        X_train_pca, X_test_pca, _ = aplicar_pca(
-            X_train,
-            X_test,
-            K
-        )
+        X_train_pca, X_test_pca, _ = aplicar_pca(X_train, X_test, K)
 
-        accuracy = regression_logistica(
-            X_train_pca,
-            y_train,
-            X_test_pca,
-            y_test
-        )
+        accuracy = regression_logistica(X_train_pca, y_train, X_test_pca, y_test)
 
         accuracies.append(accuracy)
 
@@ -332,6 +323,9 @@ def main():
     Ejecuta los ejercicios del trabajo práctico.
     """
 
+    # Semilla para que las simulaciones aleatorias sean reproducibles
+    np.random.seed(42)
+
     #----------------- CARGA DEL DATASET -----------------
 
     X_train, y_train = cargar_datos(DATASET_DIR, "train")
@@ -342,6 +336,7 @@ def main():
     print("Test: ", X_test.shape)
     print()
 
+
     #----------------- EJERCICIO 1.A -----------------
 
     accuracy_sin_pca = regression_logistica(X_train, y_train, X_test, y_test)
@@ -349,17 +344,19 @@ def main():
     print("1-a) Accuracy sin PCA:", accuracy_sin_pca)
     print()
 
+
     #----------------- EJERCICIO 1.B -----------------
 
-    K = 2
+    K_visualizacion = 2
 
-    X_train_pca, X_test_pca, pca = aplicar_pca(X_train, X_test,K)
+    X_train_pca, X_test_pca, pca = aplicar_pca(X_train, X_test, K_visualizacion)
 
     print("1-b) Antes de PCA:  ", X_test.shape)
     print("     Después de PCA:", X_test_pca.shape)
     print()
 
     graficar_pca(X_test_pca, y_test, "PCA - Conjunto de test")
+
 
     #----------------- EJERCICIO 1.C -----------------
 
@@ -368,26 +365,39 @@ def main():
     accuracies_pca = evaluar_pca(X_train, y_train, X_test, y_test, valores_K)
 
     print("1-c) Accuracies para cada K:")
+
     for k, accuracy in zip(valores_K, accuracies_pca):
         print(f"K = {k:3d} | Accuracy = {accuracy:.4f}")
+
     print()
 
     graficar_accuracy_pca(valores_K, accuracies_pca, accuracy_sin_pca)
+
 
     #----------------- EJERCICIO 2 -----------------
 
     valores_p = [0.1, 0.3, 0.5, 0.7, 0.9]
 
-    modelo_pca = entrenar_regresion_logistica(X_train_pca, y_train)
+    K_MC = 2
 
-    y_pred_pca = modelo_pca.predict(X_test_pca)
+    # Se entrena PCA y la regresión logística una única vez usando train sin perturbar
+    X_train_pca_mc, X_test_pca_mc, pca_mc = aplicar_pca(X_train, X_test, K_MC)
+    modelo_pca_mc = entrenar_regresion_logistica(X_train_pca_mc, y_train)
+
+    y_pred_pca = modelo_pca_mc.predict(X_test_pca_mc)
     accuracy_original = accuracy_score(y_test, y_pred_pca)
 
+    print("Accuracy original PCA + LR con K = 2:", accuracy_original)
+    print()
+
+
     #----------------- EJERCICIO 2.A -----------------
+
     print("2-a) Graficando PCA para distintos valores de p...")
     print()
 
-    graficar_pca_perturbado(X_test, y_test, pca, valores_p)
+    graficar_pca_perturbado(X_test, y_test, pca_mc, valores_p)
+
 
     #----------------- EJERCICIO 2.B -----------------
 
@@ -395,13 +405,15 @@ def main():
 
     print("2-b) Calculando accuracy medio estimado mediante Monte Carlo...")
 
-    accuracies_medias, accuracies_por_p = evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo_pca, valores_p, NMC)
+    accuracies_medias, accuracies_por_p = evaluar_accuracy_monte_carlo(X_test, y_test, pca_mc, modelo_pca_mc, valores_p, NMC)
 
     for p, accuracy_media in zip(valores_p, accuracies_medias):
         print(f"p = {p:.1f} | E[Ap] = {accuracy_media:.4f}")
+
     print()
 
     graficar_accuracy_monte_carlo(valores_p, accuracies_medias)
+
 
     #----------------- EJERCICIO 2.C -----------------
 
@@ -410,15 +422,19 @@ def main():
     probabilidades_perdida = calcular_probabilidad_perdida(accuracies_por_p, accuracy_original, delta)
 
     print("2-c) Probabilidad estimada de pérdida mayor a delta:")
+
     for p, probabilidad in zip(valores_p, probabilidades_perdida):
         print(f"p = {p:.1f} | P(L(p) > {delta}) = {probabilidad:.4f}")
+
     print()
 
     graficar_probabilidad_perdida(valores_p, probabilidades_perdida, delta)
 
+
     #----------------- EJERCICIO 2.D -----------------
 
     graficar_histogramas_accuracies(valores_p, accuracies_por_p)
+
 
 if __name__ == "__main__":
     main()
