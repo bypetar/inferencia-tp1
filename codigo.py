@@ -248,6 +248,7 @@ def evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo, valores_p, NMC):
     """
 
     accuracies_medias = []
+    accuracies_por_p = []
 
     for p in valores_p:
 
@@ -255,8 +256,9 @@ def evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo, valores_p, NMC):
 
         accuracy_media = np.mean(accuracies)
         accuracies_medias.append(accuracy_media)
+        accuracies_por_p.append(accuracies)
 
-    return accuracies_medias
+    return accuracies_medias, accuracies_por_p
 
 
 def graficar_accuracy_monte_carlo(valores_p, accuracies_medias):
@@ -266,11 +268,7 @@ def graficar_accuracy_monte_carlo(valores_p, accuracies_medias):
 
     plt.figure(figsize=(8, 6))
 
-    plt.plot(
-        valores_p,
-        accuracies_medias,
-        marker="o"
-    )
+    plt.plot(valores_p, accuracies_medias, marker="o")
 
     plt.xlabel("Probabilidad de perturbación p")
     plt.ylabel("Accuracy medio")
@@ -278,6 +276,54 @@ def graficar_accuracy_monte_carlo(valores_p, accuracies_medias):
     plt.grid()
 
     plt.show()
+
+
+def calcular_probabilidad_perdida(accuracies_por_p, accuracy_original, delta):
+    """
+    Estima la probabilidad de que la pérdida supere delta.
+    """
+
+    probabilidades = []
+
+    for accuracies in accuracies_por_p:
+        perdidas = accuracy_original - np.array(accuracies)
+
+        probabilidad = np.mean(perdidas > delta)
+        probabilidades.append(probabilidad)
+
+    return probabilidades
+
+
+def graficar_probabilidad_perdida(valores_p, probabilidades_perdida, delta):
+    """
+    Grafica la probabilidad de que la pérdida supere delta.
+    """
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(valores_p, probabilidades_perdida, marker="o")
+
+    plt.xlabel("Probabilidad de perturbación p")
+    plt.ylabel("Probabilidad estimada")
+    plt.title(f"Probabilidad de L(p) > {delta}")
+    plt.grid()
+
+    plt.show()
+
+
+def graficar_histogramas_accuracies(valores_p, accuracies_por_p):
+    """
+    Grafica los histogramas de accuracies para cada valor de p.
+    """
+
+    for p, accuracies in zip(valores_p, accuracies_por_p):
+        plt.figure(figsize=(8, 6))
+        plt.hist(accuracies, bins=10)
+        plt.xlabel("Accuracy")
+        plt.ylabel("Frecuencia")
+        plt.title(f"Histograma de accuracies para p = {p}")
+        plt.grid()
+
+        plt.show()
 
 #----------------- EJECUCIÓN DEL TP -----------------
 
@@ -334,6 +380,9 @@ def main():
 
     modelo_pca = entrenar_regresion_logistica(X_train_pca, y_train)
 
+    y_pred_pca = modelo_pca.predict(X_test_pca)
+    accuracy_original = accuracy_score(y_test, y_pred_pca)
+
     #----------------- EJERCICIO 2.A -----------------
     print("2-a) Graficando PCA para distintos valores de p...")
     print()
@@ -346,13 +395,30 @@ def main():
 
     print("2-b) Calculando accuracy medio estimado mediante Monte Carlo...")
 
-    accuracies_medias = evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo_pca, valores_p, NMC)
+    accuracies_medias, accuracies_por_p = evaluar_accuracy_monte_carlo(X_test, y_test, pca, modelo_pca, valores_p, NMC)
 
     for p, accuracy_media in zip(valores_p, accuracies_medias):
         print(f"p = {p:.1f} | E[Ap] = {accuracy_media:.4f}")
     print()
 
     graficar_accuracy_monte_carlo(valores_p, accuracies_medias)
+
+    #----------------- EJERCICIO 2.C -----------------
+
+    delta = 0.1
+
+    probabilidades_perdida = calcular_probabilidad_perdida(accuracies_por_p, accuracy_original, delta)
+
+    print("2-c) Probabilidad estimada de pérdida mayor a delta:")
+    for p, probabilidad in zip(valores_p, probabilidades_perdida):
+        print(f"p = {p:.1f} | P(L(p) > {delta}) = {probabilidad:.4f}")
+    print()
+
+    graficar_probabilidad_perdida(valores_p, probabilidades_perdida, delta)
+
+    #----------------- EJERCICIO 2.D -----------------
+
+    graficar_histogramas_accuracies(valores_p, accuracies_por_p)
 
 if __name__ == "__main__":
     main()
